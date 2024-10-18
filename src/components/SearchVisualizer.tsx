@@ -11,6 +11,9 @@ import { BritishMuseumSearch } from "./algorithms/BMS";
 import { HillClimbingSearch } from "./algorithms/HillClimbing";
 import { BranchAndBoundSearch } from "./algorithms/BranchNBound";
 import { OracleSearch } from "./algorithms/Oracle";
+import DeadHorseAlgorithm from "./algorithms/DeadHorse";
+import BestFirstSearchAlgorithm from "./algorithms/BestFirstSearch";
+import AOStarAlgorithm from "./algorithms/AOStar";
 
 interface SearchVisualizerProps {
   initialNodes: Node[];
@@ -59,33 +62,41 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
       heuristic: 0,
       cost: 0,
       subLabel: `H: 0, C: 0`,
-    }))
+    })),
   );
   const [edges, _] = useState<Edge[]>(
-    initialEdges.map((edge) => ({ ...edge, cost: 1 }))
+    initialEdges.map((edge) => ({ ...edge, cost: 1 })),
   );
   const [path, setPath] = useState<string[]>([]);
   const [startNode, setStartNode] = useState<string>(nodes[0]?.id || "");
   const [goalNode, setGoalNode] = useState<string>(
-    nodes[nodes.length - 1]?.id || ""
+    nodes[nodes.length - 1]?.id || "",
   );
   const [algorithm, setAlgorithm] = useState<string>("DFS");
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [delay, setDelay] = useState<number>(500);
   const [beamWidth, setBeamWidth] = useState<number>(3);
 
-  const informedSearchAlgorithms = ["A*", "Beam", "HillClimbing"];
+  const informedSearchAlgorithms = [
+    "A*",
+    "Beam",
+    "HillClimbing",
+    "AO*",
+    "DeadHorse",
+    "BestFirstSearch",
+    "Oracle",
+  ];
   const isInformedSearch = informedSearchAlgorithms.includes(algorithm);
 
   useEffect(() => {
     if (isInformedSearch) {
       calculateHeuristics();
     }
-  }, [algorithm, startNode, goalNode]);
+  }, [isInformedSearch]);
 
   const calculateHeuristics = () => {
     const nodeLevels = new Map<string, number>();
-    const queue: [string, number][] = [[startNode, 0]];
+    const queue: [string, number][] = [[goalNode, 0]];
     const visited = new Set<string>();
 
     while (queue.length > 0) {
@@ -94,8 +105,8 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
         visited.add(node);
         nodeLevels.set(node, level);
         const neighbors = edges
-          .filter((edge) => edge.source === node)
-          .map((edge) => edge.target);
+          .filter((edge) => edge.target === node)
+          .map((edge) => edge.source);
         for (const neighbor of neighbors) {
           if (!visited.has(neighbor)) {
             queue.push([neighbor, level + 1]);
@@ -104,16 +115,15 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
       }
     }
 
-    const goalLevel = nodeLevels.get(goalNode) || 0;
     setNodes((prevNodes) =>
       prevNodes.map((node) => {
-        const heuristic = Math.abs((nodeLevels.get(node.id) || 0) - goalLevel);
+        const heuristic = nodeLevels.get(node.id) || Infinity;
         return {
           ...node,
           heuristic,
           subLabel: `H: ${heuristic}, C: ${node.cost || 0}`,
         };
-      })
+      }),
     );
   };
 
@@ -126,8 +136,8 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
               cost: newCost,
               subLabel: `H: ${node.heuristic}, C: ${newCost}`,
             }
-          : node
-      )
+          : node,
+      ),
     );
   };
 
@@ -142,7 +152,7 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
           setPath,
           setStartNode,
           setGoalNode,
-          delay
+          delay,
         );
         break;
       case "BFS":
@@ -152,7 +162,7 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
           setPath,
           setStartNode,
           setGoalNode,
-          delay
+          delay,
         );
         break;
       case "A*":
@@ -162,7 +172,7 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
           setPath,
           setStartNode,
           setGoalNode,
-          delay
+          delay,
         );
         break;
       case "Beam":
@@ -173,7 +183,7 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
           setStartNode,
           setGoalNode,
           delay,
-          beamWidth
+          beamWidth,
         );
         break;
       case "BritishMuseum":
@@ -183,7 +193,7 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
           setPath,
           setStartNode,
           setGoalNode,
-          delay
+          delay,
         );
         break;
       case "HillClimbing":
@@ -193,7 +203,7 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
           setPath,
           setStartNode,
           setGoalNode,
-          delay
+          delay,
         );
         break;
       case "BranchAndBound":
@@ -203,7 +213,7 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
           setPath,
           setStartNode,
           setGoalNode,
-          delay
+          delay,
         );
         break;
       case "Oracle":
@@ -213,7 +223,37 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
           setPath,
           setStartNode,
           setGoalNode,
-          delay
+          delay,
+        );
+        break;
+      case "DeadHorse":
+        search = new DeadHorseAlgorithm(
+          nodes,
+          edges,
+          setPath,
+          setStartNode,
+          setGoalNode,
+          delay,
+        );
+        break;
+      case "BestFirstSearch":
+        search = new BestFirstSearchAlgorithm(
+          nodes,
+          edges,
+          setPath,
+          setStartNode,
+          setGoalNode,
+          delay,
+        );
+        break;
+      case "AO*":
+        search = new AOStarAlgorithm(
+          nodes,
+          edges,
+          setPath,
+          setStartNode,
+          setGoalNode,
+          delay,
         );
         break;
       default:
@@ -223,7 +263,7 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
           setPath,
           setStartNode,
           setGoalNode,
-          delay
+          delay,
         );
     }
     await search.search(startNode, goalNode);
@@ -247,6 +287,9 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
             <option value="HillClimbing">Hill Climbing Search</option>
             <option value="BranchAndBound">Branch and Bound Search</option>
             <option value="Oracle">Oracle Search</option>
+            <option value="DeadHorse">Dead Horse Algorithm</option>
+            <option value="BestFirstSearch">Best First Search</option>
+            <option value="AO*">AO* Search</option>
           </select>
           <select
             value={startNode}
