@@ -20,8 +20,18 @@ interface SearchVisualizerProps {
   initialEdges: Edge[];
 }
 
-const UpdatedGraphCanvas = ({ nodes, edges, onCostChange, actives }) => {
-  const contextMenu = ({ data, onClose }) => (
+const UpdatedGraphCanvas = ({
+  nodes,
+  edges,
+  onCostChange,
+  actives,
+}: {
+  nodes: Node[];
+  edges: Edge[];
+  onCostChange: (nodeId: string, newCost: number) => void;
+  actives: string[];
+}) => {
+  const contextMenu = ({ data, onClose }: any) => (
     <div className="bg-white w-48 border border-blue-500 rounded p-2 text-center">
       <h1 className="text-lg font-bold mb-2">{data.label}</h1>
       <div className="mb-2">
@@ -64,7 +74,7 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
       subLabel: `H: 0, C: 0`,
     })),
   );
-  const [edges, _] = useState<Edge[]>(
+  const [edges] = useState<Edge[]>(
     initialEdges.map((edge) => ({ ...edge, cost: 1 })),
   );
   const [path, setPath] = useState<string[]>([]);
@@ -348,4 +358,4 @@ const SearchVisualizer: React.FC<SearchVisualizerProps> = ({
   );
 };
 
-export { SearchAlgorithmBase, DFS, BFS, AStar, BeamSearch, SearchVisualizer };
+export { SearchVisualizer };
